@@ -1,0 +1,55 @@
+version: "3.1"
+
+networks:
+  my_inc:
+        driver: bridge
+#--------------------------------------
+volumes:
+  wordpress:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/mcarry/data/wordpress
+  mariadb:
+    driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/mcarry/data/mariadb
+#-------------------------------------
+services:
+    nginx:
+        container_name: nginx
+        ports:
+            - "443:443"
+        volumes:
+            - wordpress:/var/www/wordpress
+        networks:
+            - my_inc
+        depends_on:
+            - wordpress
+        build: requirements/nginx/
+        restart: always
+    mariadb:
+        container_name: mariadb
+        volumes:
+            - mariadb:/var/lib/mysql
+        networks:
+            - my_inc
+        build: requirements/mariadb/
+        env_file:
+            - .env
+        restart: always
+    wordpress:
+        container_name: wordpress
+        volumes:
+            - wordpress:/var/www/wordpress
+        networks:
+            - my_inc
+        depends_on:
+            - mariadb
+        build: requirements/wordpress/
+        env_file:
+            - .env
+        restart: always
